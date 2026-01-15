@@ -14,127 +14,122 @@ const characters = [
   { id: 10, name: "Padmé Amidala", age: 27 },
 ];
 
-// broken test data for exercise 6
+// broken test data for exercise 6 (includes multiple valid + invalid)
 const brokenCharacters = [
-  { id: 101, age: 50 },                 // missing name
-  { id: 102, name: "", age: 22 },       // empty name (treat as invalid)
-  { id: 103, age: 900 },                // missing name
-  null,                                 // not an object
-  { id: 104, name: "Valid Person", age: 19 },
+  { id: 101, age: 50 },            // missing name
+  { id: 102, name: "", age: 22 },  // invalid name (empty)
+  { id: 103, age: 900 },           // missing name
+  null,                            // not an object
+  { id: 104, name: "Rey", age: 20 },
+  { id: 105, name: "Finn", age: 23 },
+  { id: 106, name: "Poe Dameron", age: 31 },
 ];
 
-/**
- * Utility: clear a list and/or show an "empty" message
- */
-function clearList(listEl) {
-  if (!listEl) return;
-  listEl.innerHTML = "";
+/* ---------- Small helpers ---------- */
+function clearElement(el) {
+  if (el) el.innerHTML = "";
 }
 
-/**
- * Utility: add an <li> to a list
- */
-function addListItem(listEl, text) {
+function appendLi(listEl, text) {
   const li = document.createElement("li");
   li.textContent = text;
   listEl.appendChild(li);
 }
 
-/**
- * Utility: show an error message in a container
- */
-function showError(errorContainer, message) {
-  if (!errorContainer) return;
-
+function appendError(errorEl, message) {
   const p = document.createElement("p");
   p.className = "error-message";
   p.textContent = message;
-  errorContainer.appendChild(p);
+  errorEl.appendChild(p);
 }
 
+/* ---------- Exercise 3 + 5 function (enhanced with error handling) ---------- */
 /**
- * Exercise 3 + 5:
- * Render a list of names with error handling.
- * - array: array of objects
- * - listEl: target <ul>
- * - errorContainer: target <div> (optional)
+ * Takes ANY array of objects and renders names into a target <ul>.
+ * If an object has no "name", logs error and (if provided) prints it on the page.
  */
-function renderNames(array, listEl, errorContainer) {
-  clearList(listEl);
-  if (errorContainer) errorContainer.innerHTML = "";
+function renderNameList(array, listEl, errorEl) {
+  clearElement(listEl);
+  if (errorEl) clearElement(errorEl);
 
   array.forEach((item, index) => {
-    // error handling (exercise 5)
+    // Exercise 5: check for name property before using it
     if (!item || typeof item !== "object") {
       const msg = `Item at index ${index} is not a valid object.`;
       console.error(msg, item);
-      showError(errorContainer, msg);
+      if (errorEl) appendError(errorEl, msg);
       return;
     }
 
-    if (!("name" in item) || typeof item.name !== "string" || item.name.trim() === "") {
-      const msg = `Missing or invalid "name" for item at index ${index} (id: ${item.id ?? "unknown"}).`;
+    if (!("name" in item)) {
+      const msg = `Missing "name" property for item at index ${index} (id: ${item.id ?? "unknown"}).`;
       console.error(msg, item);
-      showError(errorContainer, msg);
+      if (errorEl) appendError(errorEl, msg);
+      return;
+    }
+
+    if (typeof item.name !== "string" || item.name.trim() === "") {
+      const msg = `Invalid "name" value for item at index ${index} (id: ${item.id ?? "unknown"}).`;
+      console.error(msg, item);
+      if (errorEl) appendError(errorEl, msg);
       return;
     }
 
     // valid name
-    addListItem(listEl, item.name.trim());
+    appendLi(listEl, item.name.trim());
   });
-
-  // Optional: if nothing got rendered
-  if (listEl && listEl.children.length === 0) {
-    addListItem(listEl, "No results found.");
-    listEl.firstChild.classList.add("empty-list");
-  }
 }
 
+/* ---------- Exercise 4 + 5 function (enhanced with error handling) ---------- */
 /**
- * Exercise 4 + 5:
- * Filter by age threshold, then render names with error handling.
+ * Takes an array and an age threshold, filters below threshold, then renders names.
  */
-function renderNamesBelowAge(array, ageThreshold, listEl, errorContainer) {
+function renderNamesBelowAge(array, ageThreshold, listEl, errorEl) {
   const filtered = array.filter((item) => {
-    // only filter real objects with numeric age
     return item && typeof item === "object" && typeof item.age === "number" && item.age < ageThreshold;
   });
 
-  renderNames(filtered, listEl, errorContainer);
+  // Reuse the Exercise 3 function (and its error handling)
+  renderNameList(filtered, listEl, errorEl);
 }
 
-// ----- EXERCISE 1 -----
+/* ---------- EXERCISE 1 ---------- */
 const namesList = document.getElementById("names-list");
-console.log("Exercise 1: All character names");
-characters.forEach((c) => console.log(c.name));
-renderNames(characters, namesList); // no errors expected
 
-// ----- EXERCISE 2 -----
+characters.forEach((character) => {
+  console.log(character.name); // required console output
+  appendLi(namesList, character.name); // required DOM output
+});
+
+/* ---------- EXERCISE 2 ---------- */
 const youngList = document.getElementById("young-characters-list");
-const under40 = characters.filter((c) => c.age < 40);
 
-console.log("Exercise 2: Characters under 40");
-under40.forEach((c) => console.log(c.name));
-renderNames(under40, youngList);
+const under40 = characters.filter((character) => character.age < 40);
 
-// ----- EXERCISE 3 -----
+under40.forEach((character) => {
+  console.log(character.name); // required console output
+  appendLi(youngList, character.name); // required DOM output
+});
+
+/* ---------- EXERCISE 3 ---------- */
 const functionList = document.getElementById("function-list");
-renderNames(characters, functionList);
+renderNameList(characters, functionList);
 
-// ----- EXERCISE 4 -----
+/* ---------- EXERCISE 4 ---------- */
 const ageFilterList = document.getElementById("age-filter-list");
 renderNamesBelowAge(characters, 40, ageFilterList);
 
-// ----- EXERCISE 5 -----
+/* ---------- EXERCISE 5 ---------- */
 const errorHandlingList = document.getElementById("error-handling-list");
 const errorMessages = document.getElementById("error-messages");
 
-// We’ll intentionally test error handling using the broken array here,
-// but still display the valid names that exist.
-renderNames(brokenCharacters, errorHandlingList, errorMessages);
+// Use mostly valid data + one broken object to demonstrate Exercise 5 clearly
+const exercise5Test = [...characters, { id: 999, age: 30 }]; // missing name on purpose
+renderNameList(exercise5Test, errorHandlingList, errorMessages);
 
-// ----- EXERCISE 6 -----
+/* ---------- EXERCISE 6 ---------- */
 const brokenArrayList = document.getElementById("broken-array-list");
 const brokenArrayErrors = document.getElementById("broken-array-errors");
 
-renderNames(brokenCharacters, brokenArrayList, brokenArrayErrors);
+// Pass brokenCharacters to the same error-handling functions
+renderNameList(brokenCharacters, brokenArrayList, brokenArrayErrors);
